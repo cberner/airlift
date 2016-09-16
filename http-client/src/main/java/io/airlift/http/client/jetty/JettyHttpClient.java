@@ -46,6 +46,7 @@ import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
+import org.eclipse.jetty.io.ByteBufferPool;
 import org.eclipse.jetty.util.HttpCookieStore;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Sweeper;
@@ -209,7 +210,19 @@ public class JettyHttpClient
 
         name = pool.getName();
         httpClient.setExecutor(pool.getExecutor());
-        httpClient.setByteBufferPool(pool.getByteBufferPool());
+        httpClient.setByteBufferPool(new ByteBufferPool()
+        {
+            @Override
+            public ByteBuffer acquire(int size, boolean direct)
+            {
+                return ByteBuffer.allocate(size);
+            }
+
+            @Override
+            public void release(ByteBuffer buffer)
+            {
+            }
+        });
         httpClient.setScheduler(pool.getScheduler());
 
         // Jetty client connections can sometimes get stuck while closing which reduces
